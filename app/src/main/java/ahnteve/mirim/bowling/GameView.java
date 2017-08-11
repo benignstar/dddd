@@ -9,6 +9,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -44,6 +45,8 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     static Sprite mEnemy[][]=new Sprite[6][8]; // 적 이미지
     static Bitmap imgBack;                      // 배경 이미지
+    private int by1, sy1;
+    private int counter=0;
     static int sw[]=new int[6];                 // 적군의 폭과 높이
     static int sh[]=new int[6];
 
@@ -144,6 +147,9 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 mEnemy[i][j]=new Sprite();
         }
 
+        by1=height/2;
+        sy1=-(width/50);
+
         difficult = ((GlobalVars) mContext.getApplicationContext()).getDifficult();
         isMusic = ((GlobalVars) mContext.getApplicationContext()).getIsMusic();
         isSound = ((GlobalVars) mContext.getApplicationContext()).getIsSound();
@@ -169,7 +175,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     public static void MakeStage(){
         mMap.ReadMap(stageNum);
-        imgBack= BitmapFactory.decodeResource(mContext.getResources(), R.drawable.space0+stageNum%5-1);
+        imgBack= BitmapFactory.decodeResource(mContext.getResources(), R.drawable.background00);
         imgBack=Bitmap.createScaledBitmap(imgBack, width, height, true);
 
         for(int i=0; i<6; i++){
@@ -311,8 +317,13 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         }
 
         public void DrawAll(Canvas canvas){
+            Rect src=new Rect();
+            Rect dst=new Rect();
+            dst.set(0,0, width, height);
 
-            canvas.drawBitmap(imgBack, 0, 0, null);
+            ScrollImage();
+            src.set(0, by1, width, by1+height/2);
+            canvas.drawBitmap(imgBack, src, dst, null);
 
             // 적기
             for(int i=5; i>=0; i--){
@@ -343,6 +354,23 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 canvas.drawBitmap(tmp.imgExp, tmp.x-tmp.w, tmp.y-tmp.h, null);
 
             DrawScore(canvas);
+        }
+
+        private void ScrollImage() {
+
+            counter++;
+/*
+            x2+=sx2;
+            y2+=sy2;
+            if(x2<0) x2=cx;
+            if(y2<0) y2=cy;*/
+
+            if(counter%2==0){
+
+                by1+=sy1;
+
+                if(by1<0) by1=height/2;
+            }
         }
 
         public void run(){
@@ -439,26 +467,46 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if(event.getAction() != MotionEvent.ACTION_DOWN)
-            return true;
-        synchronized (mHolder){
-            int x=(int)event.getX();
-            int y=(int)event.getY();
+        if(event.getPointerCount()>1){
+            synchronized (mHolder) {
+                int x = (int) event.getX(1);
+                int y = (int) event.getY(1);
 
-            if(status==GAMEOVER || status==ALL_CLEAR){
-                return mGameOver.TouchEvent(x, y);
-            }
-            if(!mShip.isDead){
-                if(DEBUG)
-                    CheckEnemyStatus(x, y);
-                mShip.dir=0;
-                if(Math.abs(x-mShip.x)<mShip.w*2 && Math.abs(y-mShip.y)<mShip.h*2){
-                    mThread.FireGunship();
-                } else if(x<mShip.x - mShip.w){
-                    mShip.dir=1;
-                } else if(x>mShip.x + mShip.w){
-                    mShip.dir=2;
+                if (status == GAMEOVER || status == ALL_CLEAR) {
+                    return mGameOver.TouchEvent(x, y);
                 }
+
+                if(!mShip.isDead){
+                    mShip.dir=0;
+                    if(x>0 && x<width/2+1)
+                        mShip.dir=1;
+                    if(x>width/2 && x<=width)
+                        mShip.dir=2;
+                }
+            }
+
+        } else {
+            synchronized (mHolder){
+                int x = (int) event.getX();
+                int y = (int) event.getY();
+
+                if (status == GAMEOVER || status == ALL_CLEAR) {
+                    return mGameOver.TouchEvent(x, y);
+                }
+
+                if(!mShip.isDead){
+                    mShip.dir=0;
+                    if(x>0 && x<width/2+1)
+                        mShip.dir=1;
+                    if(x>width/2 && x<=width)
+                        mShip.dir=2;
+                }
+            }
+
+        }
+        if(event.getAction()==MotionEvent.ACTION_UP){
+            synchronized (mHolder){
+                mShip.dir=0;
             }
         }
         return true;
@@ -479,31 +527,10 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
                 case KeyEvent.KEYCODE_DPAD_UP :
                     mThread.FireGunship();
                     break;
-                case KeyEvent.KEYCODE_DPAD_DOWN :
-
-                    break;
                 default:
                     mShip.dir=0;
             }
         }
-
         return false;
-    }
-
-    private void CheckEnemyStatus(int x, int y){
-        int x1, y1, w;
-
-        for(int i=0; i<6; i++){
-            for(int j=0; j<8; j++){
-                if(mEnemy[i][j].isDead) continue;
-                x1=mEnemy[i][j].x;
-                y1=mEnemy[i][j].y;
-                w=mEnemy[i][j].w;
-                if(Math.abs(x-x1)<w && Math.abs(y-y1)<w){
-                    Log.v("Sprite", "i="+i+", j="+j+" "+mEnemy[i][j].status);
-                    return;
-                }
-            }
-        }
     }
 } // GameView
