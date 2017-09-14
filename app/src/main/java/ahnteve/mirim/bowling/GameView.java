@@ -27,21 +27,21 @@ import android.view.WindowManager;
 import java.util.ArrayList;
 
 public class GameView extends SurfaceView implements SurfaceHolder.Callback {
-    static GameThread mThread;                   // GameTread
+    static GameThread mThread;          // GameTread
     SurfaceHolder mHolder;              // SurfaceHolder
     static Context mContext;            // Context : mContext를 외부의 Class에서 참조할 수 있도록 static으로 선언
 
     static int width, height;           // View 해상도 : 외부의 Class에서 참조할 수 있도록 static으로 선언
 
     static MapTable mMap;               // MapTable
-    static AttackEnemy mAttack;
+    static AttackEnemy mAttack; // x
     static GunShip mShip;
     static Collision mCollision;
     static GameOver mGameOver;
-    StageClear mClear;
-    static EnemyBoss mBoss;
+    StageClear mClear; // x
+    static EnemyBoss mBoss; // x
 
-    static int stageNum;
+    static int stageNum; // x
 
     static Sprite mEnemy[][]=new Sprite[6][8]; // 적 이미지
     static Bitmap imgBack;                      // 배경 이미지
@@ -55,6 +55,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
     static ArrayList<BossMissile> mBsMissile;
     static ArrayList<Explosion> mExp;
     static ArrayList<Bonus> mBonus;
+    static ArrayList<Obstacle> mObstacle;
 
     // 게임 난이도 - 메인 메뉴용
     final static int EASY=0;
@@ -132,13 +133,14 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
         mExp=new ArrayList<Explosion>();
         mBonus=new ArrayList<Bonus>();
         mCollision=new Collision();
+        mObstacle=new ArrayList<Obstacle>();
 
         mClear=new StageClear();
         mGameOver=new GameOver();
         mBoss=new EnemyBoss();
 
         mShip=new GunShip(width/2, height-60);
-        shipCnt=99;
+        shipCnt=3;
         stageNum=1;
         status=PROCESS;
 
@@ -175,7 +177,7 @@ public class GameView extends SurfaceView implements SurfaceHolder.Callback {
 
     public static void MakeStage(){
         mMap.ReadMap(stageNum);
-        imgBack= BitmapFactory.decodeResource(mContext.getResources(), R.drawable.background00);
+        imgBack= BitmapFactory.decodeResource(mContext.getResources(), R.drawable.space0);
         imgBack=Bitmap.createScaledBitmap(imgBack, width, height, true);
 
         for(int i=0; i<6; i++){
